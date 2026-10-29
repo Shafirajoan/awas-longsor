@@ -1,0 +1,28 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>awaslongsor Dashboard</title>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<body style="font-family:system-ui;max-width:420px;margin:20px auto;padding:0 16px">
+<h2>awaslongsor · Lempongsari</h2>
+<input id="pid" placeholder="PROJECT_ID">
+<button onclick="go()">Hubungkan</button>
+<div id="lvl" style="font-size:32px;font-weight:700;margin:16px 0">-</div>
+<pre id="info" style="white-space:pre-wrap"></pre>
+<button onclick="cal()">Kalibrasi ulang</button>
+<script>
+let c, pid;
+const colors = {AMAN:'#2E9E6B', WASPADA:'#B8860B', SIAGA:'#E07B00', AWAS:'#C62828'};
+function go(){
+  pid = document.getElementById('pid').value;
+  c = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+  c.on('connect', () => c.subscribe(`awaslongsor/${pid}/status`));
+  c.on('message', (t, m) => {
+    const d = JSON.parse(m);
+    lvl.textContent = d.level;
+    lvl.style.color = colors[d.level] || '#555';
+    info.textContent = JSON.stringify(d, null, 2);
+  });
+}
+function cal(){ c.publish(`awaslongsor/${pid}/cmd/calibrate`, '{}'); }
+</script>
