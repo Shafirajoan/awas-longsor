@@ -55,7 +55,7 @@ def handle(c, msg):
     slope_hist.append(data)
     if baseline is None:                          # 5 pesan pertama = baseline
         calib.append(data["tilt_deg"])
-        if len(calib) >= 5:
+        if len(calib) >= 3:
             baseline = sum(calib) / len(calib)
             print(f"[CAL] baseline {baseline:.2f}°")
         return

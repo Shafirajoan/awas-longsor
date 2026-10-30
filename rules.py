@@ -9,7 +9,7 @@ def decide(slope, ref, tilt_base, rain24):
     pts = [(m["sent_at_ms"] / 60000, m["tilt_deg"]) for m in slope
            if m["sent_at_ms"] >= cur["sent_at_ms"] - 60000]
     rate = 0.0                                   # derajat per menit
-    if len(pts) >= 3 and pts[-1][0] - pts[0][0] >= 0.5:
+    if len(pts) >= 3 and pts[-1][0] - pts[0][0] >= 0.1:
         rate = abs(pts[-1][1] - pts[0][1]) / (pts[-1][0] - pts[0][0])
 
     slope_vib = cur["vib_rms"] >= VIB_T
