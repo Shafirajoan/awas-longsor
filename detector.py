@@ -36,7 +36,7 @@ def on_connect(c, ud, flags, rc, props):
     c.subscribe(C.topic("rain"), qos=1)
     c.subscribe(C.topic("cmd/calibrate"), qos=1)
 
-def on_message(c, ud, msg):
+def handle(c, msg):
     global ref_last, baseline, calib, current
     t = msg.topic
     data = json.loads(msg.payload)
@@ -49,6 +49,7 @@ def on_message(c, ud, msg):
         rain["manual_until"] = time.time() + 1800
         return
     if data["device_id"] == "edge2":
+        data["_rx"] = time.time()
         ref_last = data
         return
     slope_hist.append(data)
@@ -58,7 +59,7 @@ def on_message(c, ud, msg):
             baseline = sum(calib) / len(calib)
             print(f"[CAL] baseline {baseline:.2f}°")
         return
-    if ref_last is None or abs(ref_last["sent_at_ms"] - data["sent_at_ms"]) > 60000:
+    if ref_last is None or time.time() - ref_last["_rx"] > 60:
         c.publish(C.topic("status"), json.dumps({"level": "OFFLINE",
                   "reason": "edge2 belum/tidak mengirim data"}), retain=True)
         return
@@ -80,6 +81,12 @@ def on_message(c, ud, msg):
     if changed and current in ("SIAGA", "AWAS"):
         c.publish(C.topic("alerts"), json.dumps(r), qos=1)
         print("[ALERT SENT]", current)
+        
+def on_message(c, ud, msg):
+    try:
+        handle(c, msg)
+    except (KeyError, ValueError) as e:
+        print("[SKIP] pesan tidak dikenali:", msg.topic, e)
 
 def main():
     c = C.new_client("detector-awaslongsor")

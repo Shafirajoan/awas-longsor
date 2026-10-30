@@ -2,6 +2,19 @@ import json, math, random, subprocess, time
 
 G = 9.81
 
+def parse_json_stream(text):
+    dec = json.JSONDecoder()
+    i, n, out = 0, len(text), {}
+    while i < n:
+        while i < n and text[i].isspace():
+            i += 1
+        if i >= n:
+            break
+        obj, i = dec.raw_decode(text, i)
+        if isinstance(obj, dict):
+            out.update(obj)
+    return out
+
 class TermuxSensor:
     def __init__(self):
         out = subprocess.run(["termux-sensor", "-l"], capture_output=True,
@@ -14,7 +27,9 @@ class TermuxSensor:
         out = subprocess.run(
             ["termux-sensor", "-s", f"{self.acc},{self.gyr}", "-n", "1"],
             capture_output=True, text=True, timeout=12, check=True).stdout
-        d = json.loads(out)
+        d = parse_json_stream(out)
+        if self.acc not in d or self.gyr not in d:
+            raise RuntimeError(f"Sensor tidak terbaca. Kunci: {list(d)}. Izinkan Termux:API?")
         a = tuple(float(v) for v in d[self.acc]["values"][:3])
         g = tuple(float(v) for v in d[self.gyr]["values"][:3])
         return time.monotonic(), a, g
