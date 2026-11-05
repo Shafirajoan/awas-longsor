@@ -16,5 +16,9 @@ def topic(suffix: str) -> str:
 def new_client(client_id: str) -> mqtt.Client:
     c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
     if TLS:
-        c.tls_set()
+        try:
+            import certifi
+            c.tls_set(ca_certs=certifi.where())
+        except ImportError:
+            c.tls_set()
     return c
