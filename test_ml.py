@@ -1,7 +1,7 @@
 import os, sys
 import pytest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from ml_predictor import predict_from_features, MODEL_PATH
+from ML_predictor import predict_from_features, MODEL_PATH
 from rules import LEVELS
 
 pytestmark = pytest.mark.skipif(not os.path.exists(MODEL_PATH),
