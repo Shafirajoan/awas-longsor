@@ -3,6 +3,13 @@ from collections import deque
 import config as C
 from rules import decide
 
+# Komponen AI (opsional): jika ml_predictor/model tidak tersedia, sistem tetap rule-based
+try:
+    from ml_predictor import predict as ml_predict
+except Exception as e:
+    print("[ML] modul ML tidak dimuat, pakai rule-based saja:", e)
+    ml_predict = None
+
 slope_hist = deque(maxlen=30)
 ref_last = None
 calib = []
@@ -66,6 +73,11 @@ def handle(c, msg):
     refresh_rain()
     r = decide(list(slope_hist), ref_last, baseline, rain["mm24"])
 
+    # Komponen AI: prediksi level risiko oleh model Random Forest (pembanding rule-based)
+    ml = ml_predict(list(slope_hist), ref_last, baseline, rain["mm24"]) if ml_predict else None
+    r["ml_level"] = ml["level"] if ml else None
+    r["ml_confidence"] = ml["confidence"] if ml else None
+
     # debounce: level baru harus muncul 2x berturut-turut
     if r["level"] == pending["level"]:
         pending["n"] += 1
@@ -81,7 +93,7 @@ def handle(c, msg):
     if changed and current in ("SIAGA", "AWAS"):
         c.publish(C.topic("alerts"), json.dumps(r), qos=1)
         print("[ALERT SENT]", current)
-        
+
 def on_message(c, ud, msg):
     try:
         handle(c, msg)
