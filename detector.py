@@ -5,7 +5,7 @@ from rules import decide
 
 # Komponen AI (opsional): jika ml_predictor/model tidak tersedia, sistem tetap rule-based
 try:
-    from ml_predictor import predict as ml_predict
+    from ML_predictor import predict as ml_predict
 except Exception as e:
     print("[ML] modul ML tidak dimuat, pakai rule-based saja:", e)
     ml_predict = None
